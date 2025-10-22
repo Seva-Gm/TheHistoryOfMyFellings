@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galería de Textos Galáctica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            min-height: 100vh;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            transition: background 1.5s ease;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .text-container {
+            max-width: 800px;
+            text-align: center;
+            color: white;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .main-text {
+            font-size: 3rem;
+            line-height: 1.4;
+            margin-bottom: 2rem;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .main-text.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .click-hint {
+            font-size: 1rem;
+            opacity: 0.7;
+            font-style: italic;
+            letter-spacing: 2px;
+        }
+
+        .floating-image {
+            position: fixed;
+            z-index: 3;
+            border-radius: 15px;
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0) rotate(0deg);
+            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            width: 300px;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .floating-image.visible {
+            opacity: 1;
+            transform: scale(1) rotate(5deg);
+        }
+
+
+
+        @media (max-width: 768px) {
+            .main-text {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background"></div>
+    <div class="stars"></div>
+    
+    <div class="content-wrapper">
+        <div class="text-container">
+            <div class="main-text" id="mainText">❤️</div>
+            <div class="click-hint">...</div>
+        </div>
+    </div>
+
+    <button class="cms-button" id="cmsButton">⚙️ Editar Textos</button>
+
+    <div class="cms-modal" id="cmsModal">
+        <div class="cms-content">
+            <h2>Gestión de Contenido</h2>
+            <p style="margin-bottom: 1rem; opacity: 0.8;">Ingresa un texto por línea:</p>
+            <textarea id="textEditor" placeholder="Texto 1&#10;Texto 2&#10;Texto 3..."></textarea>
+            <div class="cms-buttons">
+                <button class="save-btn" id="saveBtn">Guardar</button>
+                <button class="cancel-btn" id="cancelBtn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ruta de la carpeta con imágenes
+        const imageFolder = './images/';
+        
+        // Lista de nombres de archivos de imágenes (agrega aquí tus imágenes)
+        const imageFiles = [
+            '1.png',
+            '2.png',
+            '3.png',
+            '4.png',
+            '5.png',
+            '6.png',
+            '7.jpg',
+            '8.jpg'
+            // Agrega más nombres de archivos según tengas
+        ];
+
+        // Textos predeterminados
+        let texts = [
+            "❤️",
+            "Hace casi 5 meses ocurrió algo que no esperaba.",
+            "En ese entonces estaba perdido, sin rumbo. donde más que vivir, simplemente sobrevivía a cada día. ",
+            "Pero cierta noche, apareció ante mí un ángel. ",
+            "No lo supe en ese momento, pero esa noche fue el comienzo de mi gran historia de amor.",
+            "Ese angelito, de una manera u otra, sembró en mí una semilla de curiosidad inmensa. ",
+            "Nuestra primera plática fue cuanto menos curiosa, pero lo bastante profunda para dejarme con el deseo de descubrir más acerca de él.",
+            "Quise ofrecerle pedacitos de lo que para mí era una vida gris, pero al tenerlo cerca, descubrí la cantidad de colores que podía haber. ",
+            "Algunos los reconocía. otros eran completamente nuevos. ",
+            "Poco a poco quise darle más y más de esos pedacitos.",
+            "Mostrarle lo que su sola presencia estaba despertando en mí.",
+            "Y así, sin darme cuenta, el ángel tenia ganada mi vida.",
+            "Se asentó en mi corazón sin aviso, llenándolo de un calor inmenso. ",
+            "Su presencia le dio sentido a cada uno de mis latidos. ",
+            "De la manera más linda posible, sin pedírselo. ",
+            "Reparó aquello que no rompió ",
+            "Llenó aquello que nunca vació.",
+            "Así que le ofrecí lo que era mi vida entera.",
+            "Aun así, existía un pequeñito problema. ",
+            "El mundo de aquel ángel estaba demaciado lejos del mío. Éramos distintos, distantes... ",
+            "Sin embargo, una vez más, como si se tratase de magia, hizo lo suyo. ",
+            "Me demostró que no importaban las diferencias ni la distancia, que todo podía funcionar si éramos valientes y pacientes, si seguíamos tomados de la mano, incluso desde lejos.",
+            "Y asi con el corazón lleno de valentía, nos adentramos juntos en un nuevo mundo, una nueva vida.",
+            "Sobra decir que ese ángelito eres tú. ¿verdad?",
+            "Nunca pensé que nuestra historia crecería de esta manera.",
+            "Apareciste y terminaste volviéndote mi mundo entero.",
+            "Es increíble cómo, estando tan lejos, me haces sentir tan acompañado, tan querido.",
+            "Me mostraste una nueva forma de amor, una donde me enamoré del calor de tu alma y de tu inmenso corazón más que de cualquier conexión física.",
+            "Me enseñaste que no era necesario estar a tu lado para amarte o sentir tu amor.",
+            "Que por más perdido que me encuentre, tu corazón siempre será mi hogar.",
+            "Aun soy nuevo en es esta cara del amor. ",
+            "Muchas veces me cuesta encontrar las palabras correctas, siento que no alcanzan para todo lo que me haces sentir. ",
+            "Pero aun así quiero seguir explorando este amor contigo, ",
+            "Paso a paso, palabra a palabra, latido a latido.",
+            "Y si ahora me pregunto ",
+            "¿quién eres?",
+            "Es curioso cómo la vida puede girar tan rápido sin que lo notemos.",
+            "Quienes pasaron de ser dos desconocidos a volverse, poco a poco, en el motivo de las sonrisas del otro.",
+            "Nunca creí en un dios.",
+            "Nunca lo vi necesario, pero llegaste tan perfectamente a mi vida",
+            "Que no supe a quien devia darle las gracias. ksjskjs",
+            "Llegaste y todo lo que antes no entendía empezó a tener sentido. ",
+            "No se si fue el destino o una mera coincidencia pero...",
+            "Eres el azar más hermoso que me pudo tocar, la coincidencia más improbable y, aun así, la más cierta de todas.",
+            "Eres quien me salvo sin haberlo prometido, quien me cuida incluso sin darse cuenta. ",
+            "Quien me das fuerzas cada día con gestos pequeños que solo alguien como tú puede hacer tan grandes. ",
+            "Cuando el mundo se siente pesado, apareces tú, y todo se vuelve más liviano.",
+            "No siempre necesitas decir algo. ",
+            "basta con saber que estás ahí. ",
+            "Tu paciencia, tu forma de ver las cosas, tu manera de hacerme sentir capaz, me devuelven las ganas de seguir.",
+            "Eres mi calma disfrazada de persona, el recordatorio constante de que incluso los días grises tienen su luz.",
+            "Encontrarte fue llegar a un lugar que no sabía que buscaba.",
+            "Eres mi lugar seguro, donde puedo ser quien soy sin miedo a no ser suficiente.",
+            "Contigo, lo que pesaba perdio importancia, y lo que dolia se volvio más llevadero.",
+            "Cuando hablo contigo, el ruido del mundo se apaga y cuando te pienso, siento paz.",
+            "Tu presencia es mi hogar",
+            "Y aunque la distancia nos separe",
+            "Sé que siempre hay un rincón de ti esperándome, igual que hay uno mío reservado solo para ti.",
+            "Eres el chico mas bonito que hay",
+            "Y no hablo de solo por fuera. ",
+            "Sino algo mas profundo, el cómo cuidas, el cómo haces sentir a los demás.",
+            "Tienes una manera de reír que calma, una dulzura que no se disfraza, una luz que no busca brillar, pero lo hace igual.",
+            "Eres la belleza en lo cotidiano, en lo simple, en lo que haces sin darte cuenta.",
+            "Podría pasar horas hablándote y aun así sentir que no fue suficiente.",
+            "Eres la parte más reluciente de mis días, la razón por la que incluso el silencio se siente lleno.",
+            "Y ahora mirando atrás recordando ese “¿Quién eres?” de hace un momento",
+            "La respuesta se fue escribiendo sola.",
+            "Mas alla de solo en estas palabras.",
+            "Sino dia a dia, en cada momento a tu lado",
+            "Eres mi ángel cuando todo parece derrumbarse.",
+            "Mi hogar cuando necesito refugio. ",
+            "El más bonito recordatorio de que el amor no siempre llega cuando lo buscamos, sino cuando estamos listos para reconocerlo.",
+            "Ahora estás hasta en mis pensamientos distraídos, en las canciones que suenan sin razón, en los silencios que antes dolían.",
+            "No eres solo alguien que amo.",
+            "Eres mi calma después del caos, la voz que me centra, la risa que me recuerda que la vida todavía puede ser buena.",
+            "Gracias a ti entendí que amar no es perderse en alguien, sino encontrarse junato a esa persona.",
+            "Fuiste mi principio, Eres mi refugio y Siempre seras mi destino.",
+            "Ya lo dije una vez, me rehuso a que exista otro final mas que un “Y fueron felices para siemre”",
+            "Asi que corazon, jamas olvides que eres mi mundo entero.",
+            "Te amo"
+        ];
+
+        // Gradientes galácticos
+        const gradients = [
+            'radial-gradient(ellipse at top, #1e3a8a 0%, #1e1b4b 50%, #000000 100%)',
+            'radial-gradient(ellipse at bottom, #4c1d95 0%, #1e1b4b 50%, #000000 100%)',
+            'radial-gradient(circle at center, #312e81 0%, #1e1b4b 40%, #000000 100%)',
+            'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #000000 100%)',
+            'radial-gradient(ellipse at top left, #4c1d95 0%, #1e1b4b 30%, #000000 80%)',
+            'radial-gradient(circle at bottom right, #1e3a8a 0%, #000000 60%)'
+        ];
+
+        let currentIndex = 0;
+        const background = document.querySelector('.background');
+        const mainText = document.getElementById('mainText');
+        const starsContainer = document.querySelector('.stars');
+        const contentWrapper = document.querySelector('.content-wrapper');
+
+        // Crear estrellas
+        function createStars() {
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Efecto parallax
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            starsContainer.style.transform = `translate(${x}px, ${y}px)`;
+        });
+
+        // Cambiar texto y fondo
+        function changeContent() {
+            mainText.classList.remove('visible');
+            
+            setTimeout(() => {
+                currentIndex = (currentIndex + 1) % texts.length;
+                mainText.textContent = texts[currentIndex];
+                background.style.background = gradients[Math.floor(Math.random() * gradients.length)];
+                
+                setTimeout(() => {
+                    mainText.classList.add('visible');
+                }, 50);
+            }, 400);
+        }
+
+        // Crear imagen flotante
+        function createFloatingImage() {
+            const img = document.createElement('img');
+            img.className = 'floating-image';
+            
+            // Seleccionar imagen aleatoria
+            const randomImage = imageFiles[Math.floor(Math.random() * imageFiles.length)];
+            img.src = imageFolder + randomImage;
+            
+            // Posición aleatoria
+            img.style.left = Math.random() * (window.innerWidth - 150) + 'px';
+            img.style.top = Math.random() * (window.innerHeight - 150) + 'px';
+            
+            // Rotación aleatoria
+            const randomRotation = Math.random() * 20 - 10;
+            
+            document.body.appendChild(img);
+            
+            setTimeout(() => {
+                img.classList.add('visible');
+                img.style.transform = `scale(1) rotate(${randomRotation}deg)`;
+            }, 100);
+            
+            setTimeout(() => {
+                img.classList.remove('visible');
+                img.style.transform = `scale(0) rotate(${randomRotation * 2}deg)`;
+                setTimeout(() => {
+                    img.remove();
+                }, 800);
+            }, 4000);
+        }
+
+        // CMS
+        const cmsButton = document.getElementById('cmsButton');
+        const cmsModal = document.getElementById('cmsModal');
+        const textEditor = document.getElementById('textEditor');
+        const saveBtn = document.getElementById('saveBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        cmsButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            textEditor.value = texts.join('\n');
+            cmsModal.classList.add('active');
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            cmsModal.classList.remove('active');
+        });
+
+        saveBtn.addEventListener('click', () => {
+            const newTexts = textEditor.value.split('\n').filter(t => t.trim() !== '');
+            if (newTexts.length > 0) {
+                texts = newTexts;
+                currentIndex = 0;
+                mainText.textContent = texts[0];
+                cmsModal.classList.remove('active');
+            }
+        });
+
+        cmsModal.addEventListener('click', (e) => {
+            if (e.target === cmsModal) {
+                cmsModal.classList.remove('active');
+            }
+        });
+
+        // Event listeners
+        contentWrapper.addEventListener('click', changeContent);
+
+        // Inicialización
+        createStars();
+        background.style.background = gradients[0];
+        setTimeout(() => {
+            mainText.classList.add('visible');
+        }, 500);
+
+        // Imágenes flotantes periódicas (cada 12-18 segundos aleatorio)
+        function scheduleNextImage() {
+            const randomDelay = Math.random() * 6000 + 12000; // Entre 12 y 18 segundos
+            setTimeout(() => {
+                createFloatingImage();
+                scheduleNextImage();
+            }, randomDelay);
+        }
+        
+        setTimeout(() => {
+            createFloatingImage();
+            scheduleNextImage();
+        }, 5000);
+    </script>
+</body>
+</html>
